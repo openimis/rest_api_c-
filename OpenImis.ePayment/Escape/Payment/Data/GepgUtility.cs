@@ -43,33 +43,40 @@ namespace OpenImis.ePayment.Data
             
         }
 
-        public String CreateBill(IConfiguration Configuration, string OfficerCode, string PhoneNumber, string BillId, decimal ExpectedAmount, List<PaymentDetail> policies)
+        public String CreateBill(IConfiguration Configuration, string OfficerCode, string PhoneNumber, string BillId, decimal ExpectedAmount, List<InsureeProduct> products)
         {
 
             DataHelper dh = new DataHelper(Configuration);
 
             List<BillItem> items = new List<BillItem>();
 
-            if (policies.Count > 0)
+            BillItem item = new BillItem()
             {
-                foreach (var policy in policies)
-                {
-                    BillItem item = new BillItem()
-                    {
-                        BillItemRef = "ImisPolicy",
-                        BillItemAmt = Convert.ToDouble(policy.amount),
-                        BillItemEqvAmt = Convert.ToDouble(policy.amount),
-                        BillItemMiscAmt = 0,
-                        UseItemRefOnPay = "N",
-                        GfsCode = Configuration["PaymentGateWay:GePG:GfsCode:0"]
-                    };
-                    items.Add(item);
-                }
-            }
-            else
-            {
-                return "-2: error - no policy";
-            }
+                BillItemRef = "ImisPolicy",
+                BillItemAmt = Convert.ToDouble(ExpectedAmount),
+                BillItemEqvAmt = Convert.ToDouble(ExpectedAmount),
+                BillItemMiscAmt = 0,
+                UseItemRefOnPay = "N",
+                GfsCode = Configuration["PaymentGateWay:GePG:GfsCode:0"]
+            };
+
+            items.Add(item);
+
+            //foreach (var product in products)
+            //{
+
+            //    BillItem item = new BillItem()
+            //    {
+            //        BillItemRef = product.ProductCode,
+            //        BillItemAmt = Convert.ToDouble(product.ExpectedProductAmount),
+            //        BillItemEqvAmt = Convert.ToDouble(product.ExpectedProductAmount),
+            //        BillItemMiscAmt = 0,
+            //        UseItemRefOnPay = "N",
+            //        GfsCode = Configuration["PaymentGateWay:GePG:GfsCode:0"]
+            //    };
+
+            //    items.Add(item);
+            //}
 
             BillTrxInf billTrxInf = new BillTrxInf()
             {
@@ -92,7 +99,7 @@ namespace OpenImis.ePayment.Data
 
             if (OfficerCode == null)
             {
-                var InsureeNumber = policies.FirstOrDefault().insurance_number;
+                var InsureeNumber = products.FirstOrDefault().InsureeNumber;
 
                 var sSQL = @"SELECT CHFID,LastName,OtherNames,Phone,Email
                              FROM tblInsuree WHERE CHFID = @InsureeNumber";
@@ -142,7 +149,7 @@ namespace OpenImis.ePayment.Data
 
             }
 
-            string accountCode = GetAccountCodeByProductCode(policies.FirstOrDefault().insurance_product_code);
+            string accountCode = GetAccountCodeByProductCode(products.FirstOrDefault().ProductCode);
 
             newBill = new gepgBillSubReq()
             {

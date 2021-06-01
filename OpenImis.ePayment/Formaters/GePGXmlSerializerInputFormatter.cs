@@ -91,18 +91,18 @@ namespace OpenImis.ePayment.Formaters
                 string billId = StringExtensions.Between(body, "<BillId>", "</BillId>");
                 if (!String.IsNullOrEmpty(billId))
                 {
-                    var gepgFile = new GepgFileLogger(billId + "_" + this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
+                    var gepgFile = new GepgFoldersCreating(billId + "_" + this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
                     gepgFile.putRequestBody();
                 }
                 else
                 {
-                    var gepgFile = new GepgFileLogger(this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
+                    var gepgFile = new GepgFoldersCreating(this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
                     gepgFile.putRequestBody();
                 }
             }
             else
             {
-                var gepgFile = new GepgFileLogger(this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
+                var gepgFile = new GepgFoldersCreating(this.type.Name, body, Path.Combine(System.Environment.CurrentDirectory, "wwwroot"));
                 gepgFile.putRequestBody();
             }
 

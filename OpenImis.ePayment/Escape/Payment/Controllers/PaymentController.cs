@@ -122,7 +122,7 @@ namespace OpenImis.ePayment.Controllers
                 }
 
                 string reconc = JsonConvert.SerializeObject(ControlNumberResponse);
-                var gepgFile = new GepgFileLogger(billId, "CN_Response", reconc, env);
+                var gepgFile = new GepgFoldersCreating(billId, "CN_Response", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 return Ok(imisPayment.ControlNumberResp(GepgCodeResponses.Successful));
@@ -135,7 +135,7 @@ namespace OpenImis.ePayment.Controllers
                     billId = bill.BillId;
                 }
                 string reconc = JsonConvert.SerializeObject(model);
-                var gepgFile = new GepgFileLogger(billId, "CN_Response", reconc, env);
+                var gepgFile = new GepgFoldersCreating(billId, "CN_Response", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 return Ok(imisPayment.ControlNumberResp(GepgCodeResponses.InvalidSignature));
@@ -220,7 +220,7 @@ namespace OpenImis.ePayment.Controllers
                 }
 
                 string reconc = JsonConvert.SerializeObject(_response);
-                var gepgFile = new GepgFileLogger(billId, "Payment", reconc, env);
+                var gepgFile = new GepgFoldersCreating(billId, "Payment", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 return Ok(imisPayment.PaymentResp(GepgCodeResponses.Successful));
@@ -234,7 +234,7 @@ namespace OpenImis.ePayment.Controllers
                 }
 
                 string reconc = JsonConvert.SerializeObject(model);
-                var gepgFile = new GepgFileLogger(billId, "PaymentInvalidSignature", reconc, env);
+                var gepgFile = new GepgFoldersCreating(billId, "PaymentInvalidSignature", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 return Ok(imisPayment.PaymentResp(GepgCodeResponses.InvalidSignature));
@@ -285,7 +285,7 @@ namespace OpenImis.ePayment.Controllers
                     return BadRequest(imisPayment.ReconciliationResp(GepgCodeResponses.InvalidRequestData));
 
                 string reconc = JsonConvert.SerializeObject(model);
-                var gepgFile = new GepgFileLogger("Reconc", "Data", reconc, env);
+                var gepgFile = new GepgFoldersCreating("Reconc", "Data", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 foreach (var recon in model.ReconcTrxInf)
@@ -315,7 +315,7 @@ namespace OpenImis.ePayment.Controllers
             else
             {
                 string reconc = JsonConvert.SerializeObject(model);
-                var gepgFile = new GepgFileLogger("Reconc", "DataInvalidSig", reconc, env);
+                var gepgFile = new GepgFoldersCreating("Reconc", "DataInvalidSig", reconc, env);
                 gepgFile.putToTargetFolderPayment();
 
                 return Ok(imisPayment.ReconciliationResp(GepgCodeResponses.InvalidSignature));

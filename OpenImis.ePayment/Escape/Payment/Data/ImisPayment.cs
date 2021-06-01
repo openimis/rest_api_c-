@@ -54,7 +54,7 @@ namespace OpenImis.ePayment.Data
             var result = await gepg.SendHttpRequest("/api/reconciliations/sig_sp_qrequest", signedRequest, productSPCode, "default.sp.in");
 
             var content = signedRequest + "********************" + result;
-            var gepgFile = new GepgFileLogger(productSPCode, "GepGReconRequest", content, env);
+            var gepgFile = new GepgFoldersCreating(productSPCode, "GepGReconRequest", content, env);
             gepgFile.putToTargetFolderPayment();
 
             return new { reconcId = request.SpReconcReqId, resp = result };
@@ -96,37 +96,23 @@ namespace OpenImis.ePayment.Data
         public override async Task<PostReqCNResponse> PostReqControlNumberAsync(string OfficerCode, string PaymentId, string PhoneNumber, decimal ExpectedAmount, List<PaymentDetail> products, string controlNumber = null, bool acknowledge = false, bool error = false)
         {
             GepgUtility gepg = new GepgUtility(_hostingEnvironment,config);
+            var bill = gepg.CreateBill(Configuration, OfficerCode, PhoneNumber, PaymentId, Math.Round(ExpectedAmount,2), InsureeProducts);
+            var signature = gepg.GenerateSignature(bill);
 
-            ExpectedAmount = Math.Round(ExpectedAmount, 2);
-            //send request only when we have amount > 0
-            if (ExpectedAmount > 0)
-            {
-                var bill = gepg.CreateBill(Configuration, OfficerCode, PhoneNumber, PaymentId, ExpectedAmount, products);
+            var signedMesg = gepg.FinaliseSignedMsg(signature);
+            var billAck = await gepg.SendHttpRequest("/api/bill/sigqrequest", signedMesg, gepg.GetAccountCodeByProductCode(InsureeProducts.FirstOrDefault().ProductCode), "default.sp.in");
 
-                if (bill != "-2: error - no policy")
-                {
-                    var signature = gepg.GenerateSignature(bill);
+            string mydocpath = System.IO.Path.Combine(env.WebRootPath, "controlNumberAck");
+            string namepart = new Random().Next(100000, 999999).ToString();
 
-                    var signedMesg = gepg.FinaliseSignedMsg(signature);
-                    var billAck = await gepg.SendHttpRequest("/api/bill/sigqrequest", signedMesg, gepg.GetAccountCodeByProductCode(InsureeProducts.FirstOrDefault().ProductCode), "default.sp.in");
+            string reconc = JsonConvert.SerializeObject(billAck);
+            string sentbill = JsonConvert.SerializeObject(bill);
 
-                    string reconc = JsonConvert.SerializeObject(billAck);
-                    string sentbill = JsonConvert.SerializeObject(bill);
+            var content = sentbill + "********************" + reconc;
+            var gepgFile = new GepgFoldersCreating(PaymentId, "CN_Request", content, env);
+            gepgFile.putToTargetFolderPayment();
 
-                    GepgFileLogger.log(PaymentId, "CN_Request", sentbill + "********************" + reconc, env);
-
-                    return await base.PostReqControlNumberAsync(OfficerCode, PaymentId, PhoneNumber, ExpectedAmount, products, null, true, false);
-                }
-                else 
-                {
-                    return await base.PostReqControlNumberAsync(OfficerCode, PaymentId, PhoneNumber, ExpectedAmount, products, null, true, true);
-                }
-            }
-            else
-            {
-                //do not send any request to GePG when we have 0 or negative amount
-                return await base.PostReqControlNumberAsync(OfficerCode, PaymentId, PhoneNumber, ExpectedAmount, products, null, true, true); 
-            }
+            return await base.PostReqControlNumberAsync(OfficerCode, PaymentId, PhoneNumber, ExpectedAmount, products, null, true, false);
         }
 
         public string ControlNumberResp(int code)
@@ -156,7 +142,7 @@ namespace OpenImis.ePayment.Data
 
 
             var content = JsonConvert.SerializeObject(GePGCancelPaymentRequest) + "\n********************\n" + JsonConvert.SerializeObject(response);
-            var gepgFile = new GepgFileLogger(PaymentId.ToString(), "CancelPayment", content, env);
+            var gepgFile = new GepgFoldersCreating(PaymentId.ToString(), "CancelPayment", content, env);
             gepgFile.putToTargetFolderPayment();
 
             return response;
