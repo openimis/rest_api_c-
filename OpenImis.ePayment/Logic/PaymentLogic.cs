@@ -177,7 +177,7 @@ namespace OpenImis.ePayment.Logic
                     {
                         Code = 3,
                         ErrorOccured = true,
-                        MessageValue = "3-Wrong control_number",
+                        MessageValue = GepgCodeResponses.GepgResponseCodes["Bill does not exist"].ToString() + ":Bill does not exist",
                     };
 
                     return dm;
