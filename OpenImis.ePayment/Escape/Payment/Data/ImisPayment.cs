@@ -346,6 +346,83 @@ namespace OpenImis.ePayment.Data
             }
             return rejectedReason;
         }
+
+        public void insertPaymentBillNotExist(PaymentData model, int paymentStatus)
+        {
+            var sSQL = @"INSERT INTO [dbo].[tblPayment]
+			(PaymentDate, ReceivedDate, ReceivedAmount, ReceiptNo, TransactionNo, PaymentOrigin, PayerPhoneNumber, PaymentStatus, OfficerCode, ValidityFrom, AuditedUSerID, RejectedReason) 
+			VALUES (@PaymentDate, @ReceiveDate,  @Amount, @ReceiptNo, @TransactionNo, @PaymentOrigin, @PayerPhoneNumber, @PaymentStatus, @OfficerCode,  GETDATE(), -1, @ErrorMsg)";
+
+            SqlParameter[] parameters = {
+                new SqlParameter("@PaymentDate", model.payment_date),
+                new SqlParameter("@ReceiveDate", model.received_date),
+                new SqlParameter("@ControlNumber", model.control_number),
+                new SqlParameter("@Amount", model.received_amount),
+                new SqlParameter("@ReceiptNo", model.receipt_identification),
+                new SqlParameter("@TransactionNo", model.transaction_identification),
+                new SqlParameter("@PayerPhoneNumber", model.payer_phone_number),
+                new SqlParameter("@PaymentStatus", paymentStatus),
+                new SqlParameter("@PaymentOrigin", model.payment_origin),
+                new SqlParameter("@OfficerCode", model.enrolment_officer_code),
+                new SqlParameter("@ErrorMsg", GepgCodeResponses.GepgResponseCodes["Bill does not exist"].ToString()+":Bill does not exist")
+            };
+
+            try
+            {
+                dh.Execute(sSQL, parameters, CommandType.Text);
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public int GetLastInsertedPaymentId()
+        {
+            var sSQL = @"SELECT TOP(1) PaymentID FROM tblPayment ORDER BY PaymentID DESC";
+
+            SqlParameter[] parameters = {
+            };
+            try
+            {
+                var data = dh.GetDataTable(sSQL, parameters, CommandType.Text);
+                if (data.Rows.Count > 0)
+                {
+                    var row = data.Rows[0];
+                    return Convert.ToInt32(row["PaymentID"]);
+                }
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+            return 0;
+        }
+
+        public void insertPaymentDetailBillNotExist(PaymentData model, int billId)
+        {
+            var sSQL = @"INSERT INTO [dbo].[tblPaymentDetails]
+				(PaymentID, ProductCode, InsuranceNumber, PolicyStage, ValidityFrom, AuditedUserId) 
+				VALUES (@PaymentID, NULL, NULL, 'N', GETDATE(), -1)
+			";
+
+            SqlParameter[] parameters = {
+                new SqlParameter("@PaymentID", billId),
+            };
+
+            try
+            {
+                dh.Execute(sSQL, parameters, CommandType.Text);
+            }
+            catch (Exception e)
+            {
+
+                throw e;
+            }
+        }
+
+
 #endif
     }
 }

@@ -166,6 +166,13 @@ namespace OpenImis.ePayment.Logic
                 else
                 {
                     //TO-DO: create the payment with the billid to save the error: -4 if on GetPayment
+                    //step 1 - create payment
+                    payment.insertPaymentBillNotExist(model, PaymentStatus.FailedReceived);
+                    //step 2 - get new payment with this error
+                    int idPaymentWithError = payment.GetLastInsertedPaymentId();
+                    //step 3 - if we have paymentId then create paymentDetail
+                    payment.insertPaymentDetailBillNotExist(model, idPaymentWithError);
+
                     DataMessage dm = new DataMessage
                     {
                         Code = 3,
