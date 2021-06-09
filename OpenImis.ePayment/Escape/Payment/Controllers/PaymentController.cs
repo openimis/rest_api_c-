@@ -262,14 +262,19 @@ namespace OpenImis.ePayment.Controllers
                     _response = await base.GetPaymentData(pay);
                     var errorValue = _response.GetType().GetProperty("Value").GetValue(_response);
                     //check if response contains 'error_message' property after processing payment from GePG
-                    if (errorValue.GetType().GetProperty("error_message") != null) 
+                    if (errorValue.GetType().GetProperty("error_message") != null)
                     {
                         string errorMessage = (errorValue.GetType().GetProperty("error_message").GetValue(errorValue)).ToString();
-                        if (errorMessage != "Unknown Error Occured" && errorMessage != "3-Wrong control_number") 
+                        if (errorMessage != "Unknown Error Occured" && errorMessage != "3-Wrong control_number")
                         {
                             string[] errorCodes = errorMessage.Split(':');
                             //get the error code returned after processing payment from GePG
                             errorCode = int.Parse(errorCodes[0]);
+                        }
+                        else
+                        {
+                            //otherwise in case of another errors - raise '7201:Failure'
+                            errorCode = GepgCodeResponses.GepgResponseCodes["Failure"];
                         }
                     }
                 }
