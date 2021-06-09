@@ -260,16 +260,18 @@ namespace OpenImis.ePayment.Controllers
                     GepgFileLogger.Log(billId, "Payment", reconc, env);
                     
                     _response = await base.GetPaymentData(pay);
-
+                    var errorValue = _response.GetType().GetProperty("Value").GetValue(_response);
                     //check if response contains 'error_message' property after processing payment from GePG
-                    if (_response.GetType().GetProperty("error_message") != null) 
+                    if (errorValue.GetType().GetProperty("error_message") != null) 
                     {
-                        string errorMessage = (_response.GetType().GetProperty("error_message").GetValue(_response)).ToString();
-                        string[] errorCodes = errorMessage.Split(':');
-                        //get the error code returned after processing payment from GePG
-                        errorCode = int.Parse(errorCodes[0]);
+                        string errorMessage = (errorValue.GetType().GetProperty("error_message").GetValue(errorValue)).ToString();
+                        if (errorMessage != "Unknown Error Occured" && errorMessage != "3-Wrong control_number") 
+                        {
+                            string[] errorCodes = errorMessage.Split(':');
+                            //get the error code returned after processing payment from GePG
+                            errorCode = int.Parse(errorCodes[0]);
+                        }
                     }
-
                 }
 
                 if (errorCode == 0)
