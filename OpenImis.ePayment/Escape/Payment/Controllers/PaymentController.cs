@@ -238,7 +238,7 @@ namespace OpenImis.ePayment.Controllers
                     return BadRequest(imisPayment.PaymentResp(GepgCodeResponses.GepgResponseCodes["Invalid Request Data"]));
 
                 object _response = null;
-
+                int errorCode = 0;
                 foreach (var payment in model.PymtTrxInf)
                 {
 
@@ -262,10 +262,34 @@ namespace OpenImis.ePayment.Controllers
                     GepgFileLogger.Log(billId, "Payment", reconc, env);
                     
                     _response = await base.GetPaymentData(pay);
+                    var errorValue = _response.GetType().GetProperty("Value").GetValue(_response);
+                    //check if response contains 'error_message' property after processing payment from GePG
+                    if (errorValue.GetType().GetProperty("error_message") != null)
+                    {
+                        string errorMessage = (errorValue.GetType().GetProperty("error_message").GetValue(errorValue)).ToString();
+                        if (errorMessage != "Unknown Error Occured" && errorMessage != "3-Wrong control_number")
+                        {
+                            string[] errorCodes = errorMessage.Split(':');
+                            //get the error code returned after processing payment from GePG
+                            errorCode = int.Parse(errorCodes[0]);
+                        }
+                        else
+                        {
+                            //otherwise in case of another errors - raise '7201:Failure'
+                            errorCode = GepgCodeResponses.GepgResponseCodes["Failure"];
+                        }
+                    }
+                }
 
-                }               
-
-                return Ok(imisPayment.PaymentResp(GepgCodeResponses.GepgResponseCodes["Successful"]));
+                if (errorCode == 0)
+                {
+                    return Ok(imisPayment.PaymentResp(GepgCodeResponses.GepgResponseCodes["Successful"]));
+                }
+                else 
+                {
+                    //error code saved in DataMessage
+                    return Ok(imisPayment.PaymentResp(errorCode));
+                }
             }
             else
             {

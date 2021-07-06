@@ -165,6 +165,7 @@ namespace OpenImis.ePayment.Logic
                 }
                 else
                 {
+                    //TO-DO: create the payment with the billid to save the error: -4 if on GetPayment
                     DataMessage dm = new DataMessage
                     {
                         Code = 3,
@@ -215,6 +216,30 @@ namespace OpenImis.ePayment.Logic
                 }
 #endif*/
 
+            }
+            else 
+            {
+                string rejectedReason = "";
+                switch (response.Code) 
+                {
+                    //3 - Wrong Control Number
+                    case 3:
+                        rejectedReason = payment.PrepareRejectedReason(payment.PaymentId, GepgCodeResponses.GepgResponseCodes["Bill does not exist"].ToString());
+                        response.MessageValue = rejectedReason;
+                        break;
+                    //4 - Wrong Payment Amount
+                    case 4:
+                        rejectedReason = payment.PrepareRejectedReason(payment.PaymentId, GepgCodeResponses.GepgResponseCodes["Paid amount is not exact billed amount"].ToString());
+                        response.MessageValue = rejectedReason;
+                        break;
+                    //5 - Duplicated Payment
+                    case 5:
+                        rejectedReason = payment.PrepareRejectedReason(payment.PaymentId, GepgCodeResponses.GepgResponseCodes["Duplicate Payment"].ToString());
+                        response.MessageValue = rejectedReason;
+                        break;
+                }
+                if (rejectedReason != "") 
+                    payment.setRejectedReason(payment.PaymentId, rejectedReason);
             }
 
             return response;

@@ -427,7 +427,6 @@ namespace OpenImis.ePayment.Data
                 // TODO: manage error messages from SP execution 
                 message = new SavePayResponse(int.Parse(data[1].Value.ToString()), false, (int)Language).Message;
                 GetPaymentInfo(Convert.ToInt32(data[0].Value));
-
             }
             catch (Exception e)
             {
